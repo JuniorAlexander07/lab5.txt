@@ -1,0 +1,33 @@
+comandos:
+
+sudo apt install rsync 
+cd Documents
+mkdir archivos 
+cd archivos 
+touch archivos{1..100}.txt
+ls
+rsync -azvp /home/usuario/Documents/archivos sshserver@192.168.x.x:/home/usuario/Documents/
+
+en la otra maquina:
+
+cd Documents 
+cd archivos 
+ls
+
+vuelve a la maquina virtual principal
+sudo nano /home/usuario/Documents/sync_script.sh
+#!/bin/bash
+rsync -azvp /home/usuario/Documents/archivos sshserver@192.168.x.x:/home/usuario/Documents/
+Guardar y salir
+
+sudo chmod +x /home/usuario/Documents/sync_script.sh
+crontab -e
+* * * * * /bin/bash /home/usuario/Documents/sync_script.sh
+guardar y salir
+
+sudo nano archivos6.txt
+Ponemos una frase cualquiera: ojala funcione
+Guardamos y salimos
+
+Y ahora vamos a la otra maquina y vamos a buscar el archivo
+Cat archivos6.txt
