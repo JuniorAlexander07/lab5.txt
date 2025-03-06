@@ -1,0 +1,48 @@
+comandos:
+
+sudo apt install heartbeat 
+
+verificamos el estado del servicio con:
+sudo systemctl status heartbeat
+
+sudo nano /etc/ha.d/ha.cf
+
+ahora dentro del archivo agregamos estas líneas:
+logfile /var/log/ha-log
+logfacility local0 
+keepalive 2 
+deadtime 10
+initdead 30
+bcast eth0 
+node Kali
+node kali2
+
+ahora vamos a configurar la autenticación la llave con la que se van a comunicar con:
+
+sudo nano /etc/ha.d/authkeys
+
+el archivo estará vacio ponemos
+auth 3
+3 md5 clavesupersecreta
+
+Guardamos y salimos
+
+Le damos permisos de ejecución a la llave:
+sudo chmod 600 /etc/ha.d/authkeys
+
+ahora vamos agregarle la ip flotante que vamos a usar
+sudo nano /etc/ha.d/haresources
+
+En kali (nodo1):
+kali IPaddr::192.168.x.x/24/eth0
+En kali2 (nodo2):
+kali2 IPaddr::192.168.x.x/24/eth0
+guardar y salir
+ahora vamos a reiniciar heartbeat:
+sudo systemctl restart heartbeat.service
+
+ifconfig para ver si adquirió la ip flotante
+
+y ahora vamos a hacer la ultima prueba y es hacer ping desde el cmd
+ping 192.168.x.x -t
+
