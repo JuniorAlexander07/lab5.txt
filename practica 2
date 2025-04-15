@@ -1,13 +1,31 @@
-comandos:
+necesitamos dos maquina linux
 
+hacemos la instalacion en ambas maquinas:
 sudo apt install heartbeat 
 
 verificamos el estado del servicio con:
 sudo systemctl status heartbeat
 
+si aparecen muchos errores y letras rojas, es normal, hay que configurarlo.
+
+en ambas maquinas hay que cambiarle el nombre para que se distingan los nodos o en una sola maquina, solo tienen que tener hnombre de hosts distintos.
+
+para verificar el nombre de los dos hosts:
+uname -n 
+
+en la segunda maquina puedes poner:
+sudo nano /etc/hosts
+127.0.1.1 kali2
+
+sudo reboot
+
+en las dos maquinas haremos el siguiente paso en ambas: (tiene que ser igual)
+
+vamos a editar el texto:
 sudo nano /etc/ha.d/ha.cf
 
-ahora dentro del archivo agregamos estas líneas:
+ahora dentro del archivo agregamos estas líneas:  (el archivo estara vacio)
+
 logfile /var/log/ha-log
 logfacility local0 
 keepalive 2 
@@ -17,7 +35,7 @@ bcast eth0
 node Kali
 node kali2
 
-ahora vamos a configurar la autenticación la llave con la que se van a comunicar con:
+ahora vamos a configurar la autenticación, la llave con la que se van a comunicar en ambas maquinas con:
 
 sudo nano /etc/ha.d/authkeys
 
@@ -27,22 +45,52 @@ auth 3
 
 Guardamos y salimos
 
-Le damos permisos de ejecución a la llave:
+Le damos permisos de ejecución a la llave en las dos maquinas:
 sudo chmod 600 /etc/ha.d/authkeys
 
 ahora vamos agregarle la ip flotante que vamos a usar
 sudo nano /etc/ha.d/haresources
 
-En kali (nodo1):
-kali IPaddr::192.168.x.x/24/eth0
-En kali2 (nodo2):
-kali2 IPaddr::192.168.x.x/24/eth0
+En kali (nodo1) ponemos:
+kali IPaddr::192.168.100.200/24/eth0
+
 guardar y salir
-ahora vamos a reiniciar heartbeat:
+
+en la segunda maquina:
+sudo nano /etc/ha.d/haresources
+
+En kali2 (nodo2) ponemos:
+kali2 IPaddr::192.168.100.200/24/eth0
+
+guardar y salir
+
+ahora vamos a reiniciar heartbeat:(en ambas maquinas)
 sudo systemctl restart heartbeat.service
 
-ifconfig para ver si adquirió la ip flotante
+veamos el estado si ya esta corriendo y si esta bien configurado:(ambas maquinas)
+sudo systemctl status heartbeat.service
 
-y ahora vamos a hacer la ultima prueba y es hacer ping desde el cmd
-ping 192.168.x.x -t
+deberia de estar todo en orden en ambas
+
+hazle un ifconfig para ver si adquirió la ip flotante (en las dos maquinas para ver cual maquina tiene la ip flotante)
+ifconfig
+
+y ahora vamos a hacer la ultima prueba y es hacer ping desde el cmd a la ip flotante
+ping 192.168.100.200 -t                  (-t para que haga ping sin parar, dejalo haciendo ping sin parar)
+
+ve a la maquina que tiene la ip flotante y dale un:
+sudo reboot
+
+en el cmd empezara a perder paquetes, pero la segunda maquina deberia reemplazar la primera y levantar el servicio
+haciendo que vuelva a dar ping en el cmd, solo tienes que esperar a que la ip flotante vaya al otro servidor
+y vuelva a ponerse en pie el servicio.
+
+y obtendremos disponibilidad de nuevo a los paquetes
+
+ahora vamos a darle un ifconfig a la maquina 2 para ver si obtuvo la ip flotante
+ifconfig
+
+y cuando la primera maquina encienda vamos a reiniciar el servicio para que vuelva a ponerse activo
+sudo systemctl restart heartbeat.service
+sudo systemctl status heartbeat.service
 
