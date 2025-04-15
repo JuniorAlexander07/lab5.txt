@@ -1,33 +1,91 @@
-comandos:
+Se necesita dos maquina virtuales linux
+
+En una vamos a instalar:
 
 sudo apt install rsync 
+
+Para crear llaves ssh
+ssh-keygen
+
+Esto copiara la llave en la otra maquina virtual
+ssh-copy-id alexander@192.100.168.116  ip de la otra maquina
+
+Le ponemos yes
+
+Ya las llaves deben de estar creadas
+Entra con ssh alexander@192.100.168.116
+Debería entrar sin contraseña 
+
+Ahora vamos a sincronizar los archivos
+
+Vamos a la maquina principal donde instalamos rsync
 cd Documents
 mkdir archivos 
 cd archivos 
+
+Ahora vamos a crear 100 archivos 
 touch archivos{1..100}.txt
 ls
-rsync -azvp /home/usuario/Documents/archivos sshserver@192.168.x.x:/home/usuario/Documents/
 
-en la otra maquina:
+ahora lo que vamos a hacer para poder conectar y replicar estos archivos a través de rsync de una maquina a otra va a ser con el siguiente comando
 
+rsync -azvp /home/usuario/Documents/archivos (espacio)
+alexander@192.168.100.116:/home/usuario2/Documents/            ip de la maquina que recibira los archivos ssh
+
+explicación del comando:
+-azvp es lo que nos va a permitir copiar un archivo de una maquina a otra
+Ponemos la dirección donde están los archivos home, usuario,documentos y archivos y luego vamos a poner la conexión ssh de la otra maquina y por ultimo la dirección donde queremos que se copien los archivos 
+
+Ahora vamos a verificar en la otra maquina virtual 
 cd Documents 
 cd archivos 
 ls
 
-vuelve a la maquina virtual principal
-sudo nano /home/usuario/Documents/sync_script.sh
-#!/bin/bash
-rsync -azvp /home/usuario/Documents/archivos sshserver@192.168.x.x:/home/usuario/Documents/
+(vuelve a la maquina virtual original)
+Ahora lo que vamos a hacer es sincronizar las maquinas al punto de que yo cambie un archivo y se vea reflejado en la otra maquina. Lo primero que haremos es crear un pequeño script.
+
+sudo nano /home/alexander/Documents/sync_script.sh
+
+
+ponemos lo siguiente en el archivo:
+
+rsync -azvp /home/alexander/Documents/archivos (espacio) alexander@192.168.100.116:/home/alexander/Documents/
+
 Guardar y salir
+Explicación: lo estamos poniendo en el script para que se sincronice 
 
-sudo chmod +x /home/usuario/Documents/sync_script.sh
+Para darle permisos de ejecución al script:
+sudo chmod +x /home/alexander/Documents/sync_script.sh
+
+ahora lo que haremos sera hacer un crontab basándose en el script haga la sincronización de los cambios en el servidor cada un minuto 
+
 crontab -e
-* * * * * /bin/bash /home/usuario/Documents/sync_script.sh
-guardar y salir
 
+nos pedirá el editor de texto que queremos usar, le damos 1 si queremos usar nano
+
+bajamos hasta lo ultimo 
+
+y ponemos 
+
+* * * * * /bin/bash /home/alexander/Documents/sync_script.sh
+Para que se ejecute el script cada un minuto y haga cambios cada minuto y así se van a mantener actualizados los documentos.
+
+Explicación: El /bin/bash se refiere al intérprete de comandos que se utilizará para ejecutar el script.
+El comando completo significa que el script sync_script.sh ubicado en /home/alexander/Documents/ se ejecutará cada minuto, sin importar la hora, el día o el mes.
+
+recordatorio:
+Minuto(0-59), hora(0-23), día del mes1-31), mes(1-12), día de la semana (0-6)
+
+Guardamos y salimos
+Ahora vamos a comprobar si esto esta funcionando 
+
+Voy a editar un archivo como ejemplo con:
 sudo nano archivos6.txt
 Ponemos una frase cualquiera: ojala funcione
 Guardamos y salimos
 
 Y ahora vamos a la otra maquina y vamos a buscar el archivo
-Cat archivos6.txt
+
+cat archivos6.txt
+
+deberia de reflejarse el cambio.
