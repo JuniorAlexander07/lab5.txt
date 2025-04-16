@@ -1,0 +1,111 @@
+Necesitamos dos maquinas virtuales Linux
+
+En ambas maquinas actualicemos nuestros repositorios e instalar apache en caso de no tenerlo:
+sudo apt update
+sudo apt install apache2 -y
+
+habilitemos el servicio en ambas maquinas 
+sudo systemctl start apache2
+sudo systemctl status apache2
+
+ahora en la primera maquina vamos a crear nuestra pagina web personalizada:
+cd /var/www/html
+ls
+
+si existe el archivo index.html es una plantilla, eliminala con:
+sudo rm index.html
+
+crea uno propio:
+sudo nano index.html
+
+dentro agregamos:
+<html>
+<body>
+<h1> Este es mi servidor 1 </h1>
+</body>
+</html>
+
+Guardar y salir
+
+Repetimos los mismos pasos para la segunda maquina, pero en el archivo de configuración index.html pondremos lo siguiente:
+
+<html>
+<body>
+<h1> Este es mi servidor 2 </h1>
+</body>
+</html>
+
+Guardamos y salimos
+
+Vamos a reiniciar el servicio en ambas maquinas para guardar cambios:
+Sudo systemctl restart apache2
+
+Ahora vamos a instalar keepalived en ambas maquinas:
+sudo apt install keepalived -y
+
+ahora vamos a habilitar el servicio en ambas:
+sudo systemctl start keepalived
+sudo systemctl status keepalived
+
+ahora en el servidor 1 lo vamos a configurar como el master y el 2 lo vamos a poner como el de respaldo 
+vamos a la maquina 1 para ingresar al archivo de conf de keepalived
+sudo nano /etc/keepalived/keepalived.conf
+
+dentro del archivo de conf vacio pegamos:
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass Teletubies123
+    }
+    virtual_ipaddress {
+        192.168.100.200
+    }
+}
+
+Reinciamos keepalived:
+sudo systemctl restart keepalived
+
+ahora vamos a la segunda maquina y entramos al archivo de conf
+sudo nano /etc/keepalived/keepalived.conf
+ 
+dentro pegamos los siguiente:
+vrrp_instance VI_1 {
+    state BACKUP
+    interface eth0
+    virtual_router_id 51
+    priority 90
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass Teletubies123
+    }
+    virtual_ipaddress {
+        192.168.100.200
+    }
+}
+
+Reinciamos servicio:
+sudo systemctl restart keepalived
+
+ahora vamos a validar de que todo este funcionando
+
+hay que verificar si las dos paginas web se crearon ve al navegador en la maquina 1 y pon la ip para verificar, ve a la maquina 2 y pon su ip en el navegador también
+nodo 1 http://192.168.100.x
+nodo 2 http://192.168.100.x
+
+ahora iremos al servidor 2 y vamos a poner la ip flotante que maneja los dos servidores
+192.168.100.200
+
+Debería de aparecer el servidor 1 en la pagina, esto es porque tiene mas prioridad, ahora vamos a apagar nuestro servidor 1, o sea apagar la maquina
+
+Ponemos en el navegador nuevamente 
+192.168.100.200
+
+Debería de mostrar el servidor 2 
+
+Validando así la alta disponibilidad.
